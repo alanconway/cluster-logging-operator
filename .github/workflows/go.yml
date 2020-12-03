@@ -24,5 +24,5 @@ jobs:
     - name: Check
       run: |
         make test-unit bin/forwarder-generator bin/cluster-logging-operator
-	go test ./test/... -exec true > /dev/null # Build but don't run e2e tests.
+        go test ./test/... -exec true > /dev/null # Build but don't run e2e tests.
 
