@@ -100,6 +100,9 @@ clean:
 	rm -rf bin tmp _output .target
 	go clean -cache -testcache ./...
 
+clean-cluster:
+	oc delete ns -l test-client
+
 PATCH?=Dockerfile.patch
 image: .target/image
 .target/image: .target $(shell find cmd must-gather version scripts files vendor manifests .bingo pkg -type f) Makefile Dockerfile  go.mod go.sum
