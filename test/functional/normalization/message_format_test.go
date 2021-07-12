@@ -42,6 +42,7 @@ var _ = Describe("[LogForwarding] Functional tests for message format", func() {
 		var outputLogTemplate = types.K8sAuditLog{
 			AuditLogCommon: types.AuditLogCommon{
 				Kind:             kind,
+				LogType:          "audit",
 				ViaqIndexName:    "audit-write",
 				Level:            "info",
 				Timestamp:        time.Time{},
@@ -73,6 +74,7 @@ var _ = Describe("[LogForwarding] Functional tests for message format", func() {
 		// Template expected as output Log
 		var outputLogTemplate = types.LinuxAuditLog{
 			Message:       auditLogLine,
+			LogType:       "audit",
 			ViaqIndexName: "audit-write",
 			AuditLinux: types.AuditLinux{
 				Type:     msgType,

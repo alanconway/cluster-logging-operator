@@ -1,15 +1,16 @@
 package v1
 
+// NOTE: The Enum validation on OutputSpec.Type must be updated if the list of
+// known types changes.
+
 // Output type constants, must match JSON tags of OutputTypeSpec fields.
 const (
 	OutputTypeElasticsearch  = "elasticsearch"
 	OutputTypeFluentdForward = "fluentdForward"
 	OutputTypeSyslog         = "syslog"
 	OutputTypeKafka          = "kafka"
+	OutputTypeLoki           = "loki"
 )
-
-// NOTE: The Enum validation on OutputSpec.Type must be updated if the list of
-// known types changes.
 
 // OutputTypeSpec is a union of optional additional configuration specific to an
 // output type. The fields of this struct define the set of known output types.
@@ -22,6 +23,8 @@ type OutputTypeSpec struct {
 	Elasticsearch *Elasticsearch `json:"elasticsearch,omitempty"`
 	// +optional
 	Kafka *Kafka `json:"kafka,omitempty"`
+	// +optional
+	Loki *Loki `json:"loki,omitempty"`
 }
 
 // Syslog provides optional extra properties for output type `syslog`
@@ -121,9 +124,8 @@ type Kafka struct {
 	Brokers []string `json:"brokers,omitempty"`
 }
 
-// Placeholders for configuration of other types
-
 type FluentdForward struct{}
+
 type Elasticsearch struct {
 	// StructuredTypeKey specifies the metadata key to be used as name of elasticsearch index
 	// It takes precedence over StructuredTypeName
@@ -135,4 +137,24 @@ type Elasticsearch struct {
 	//
 	// +optional
 	StructuredTypeName string `json:"structuredTypeName,omitempty"`
+}
+
+// Loki provides optional extra properties for `type: loki`
+type Loki struct {
+	// LabelKeys is a list of meta-data field keys to replace the default Loki labels.
+	//
+	// Loki label names must match the regular expression "[a-zA-Z_:][a-zA-Z0-9_:]*".
+	// Illegal characters in meta-data keys are replaced with "_" to form the label name.
+	// For example the meta-data key "kubernetes.labels.foo" becomes Loki label "kubernetes_labels_foo".
+	//
+	// If LabelKeys is not set, the default labels are:
+	// [log_type, kubernetes_namespace_name, kubernetes_pod_name, kubernetes_host]
+	//
+	// Note: the label kubernetes_host is always included, even if not requested.
+	// Loki requires log streams to be correctly ordered by timestamp.
+	// Including kubernetes_host in the label set ensures each stream originates from a single host,
+	// and timestamps cannot become disordered due to clock differences on different hosts.
+	//
+	// +optional
+	LabelKeys []string `json:"labelKeys,omitempty"`
 }

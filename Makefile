@@ -140,7 +140,9 @@ regenerate:
 deploy-image: image
 	hack/deploy-image.sh
 
-deploy:  deploy-image deploy-elasticsearch-operator deploy-catalog install
+deploy-clo: deploy-image deploy-elasticsearch-operator deploy-catalog install
+
+deploy:  deploy-clo deploy-elasticsearch-operator
 
 install:
 	IMAGE_CLUSTER_LOGGING_OPERATOR=image-registry.openshift-image-registry.svc:5000/openshift/origin-cluster-logging-operator:latest \

@@ -21,6 +21,7 @@ var templateRegistry = []string{
 	storeSyslogTemplateOld,
 	storeSyslogTemplate,
 	storeKafkaTemplate,
+	outputLabelLokiTemplate,
 }
 
 const fluentConfTemplate = `{{- define "fluentConf" -}}
@@ -524,6 +525,12 @@ const inputSourceOpenShiftAuditTemplate = `{{- define "inputSourceOpenShiftAudit
 
 const sourceToPipelineCopyTemplate = `{{- define "sourceToPipelineCopyTemplate" -}}
 <label {{sourceTypelabelName .Source}}>
+  <filter **>
+    @type record_modifier
+    <record>
+      log_type {{.Source}}
+    </record>
+  </filter>
   <match **>
     @type copy
 {{- range $index, $pipelineLabel := .PipelineNames }}
@@ -599,7 +606,7 @@ const pipelineToOutputCopyTemplate = `{{- define "pipelineToOutputCopyTemplate" 
     hash_value_field structured
     <parse>
       @type json
-	  json_parser oj
+    json_parser oj
     </parse>
   </filter>
   {{ end -}}
@@ -620,17 +627,17 @@ const outputLabelConfTemplate = `{{- define "outputLabelConf" -}}
   {{- if (.NeedChangeElasticsearchStructuredType)}}
   <filter **>
     @type record_modifier
-	<record>
-	  typeFromKey     ${record.dig({{.GetKeyVal .Target.OutputTypeSpec.Elasticsearch.StructuredTypeKey}})}
-	  hasStructuredTypeName     "{{.Target.OutputTypeSpec.Elasticsearch.StructuredTypeName}}"
-	  viaq_index_name  ${ if !record['structured'].nil? && record['structured'] != {}; if !record['typeFromKey'].nil?; "app-"+record['typeFromKey']+"-write"; elsif record['hasStructuredTypeName'] != ""; "app-"+record['hasStructuredTypeName']+"-write"; else record['viaq_index_name']; end; else record['viaq_index_name']; end;}
-	</record>
-	remove_keys typeFromKey, hasStructuredTypeName
+  <record>
+    typeFromKey     ${record.dig({{.GetKeyVal .Target.OutputTypeSpec.Elasticsearch.StructuredTypeKey}})}
+    hasStructuredTypeName     "{{.Target.OutputTypeSpec.Elasticsearch.StructuredTypeName}}"
+    viaq_index_name  ${ if !record['structured'].nil? && record['structured'] != {}; if !record['typeFromKey'].nil?; "app-"+record['typeFromKey']+"-write"; elsif record['hasStructuredTypeName'] != ""; "app-"+record['hasStructuredTypeName']+"-write"; else record['viaq_index_name']; end; else record['viaq_index_name']; end;}
+  </record>
+  remove_keys typeFromKey, hasStructuredTypeName
   </filter>
   {{- else}}
   <filter **>
     @type record_modifier
-	remove_keys structured
+  remove_keys structured
   </filter>
   {{- end}}
   {{- if .IsElasticSearchOutput}}
@@ -675,24 +682,24 @@ const outputLabelConfNoretryTemplate = `{{- define "outputLabelConfNoRetry" -}}
 const outputLabelConfJsonParseNoretryTemplate = `{{- define "outputLabelConfJsonParseNoRetry" -}}
 <label {{.LabelName}}>
   <filter **>
-	@type parse_json_field
-	json_fields  message
-	merge_json_log false
-	replace_json_log true
+  @type parse_json_field
+  json_fields  message
+  merge_json_log false
+  replace_json_log true
   </filter>
 {{ if .Target.Syslog.AddLogSource }}
   <filter **>
-	@type record_modifier
-	<record>
-	  kubernetes_info ${if record.has_key?('kubernetes'); record['kubernetes']; else {}; end}
-	  namespace_info  ${if record['kubernetes_info'] != nil && record['kubernetes_info'] != {}; "namespace_name=" + record['kubernetes_info']['namespace_name']; else nil; end}
-	  pod_info        ${if record['kubernetes_info'] != nil && record['kubernetes_info'] != {}; "pod_name=" + record['kubernetes_info']['pod_name']; else nil; end}
-	  container_info  ${if record['kubernetes_info'] != nil && record['kubernetes_info'] != {}; "container_name=" + record['kubernetes_info']['container_name']; else nil; end}
-	  msg_key         ${if record.has_key?('message') && record['message'] != nil; record['message']; else nil; end}
+  @type record_modifier
+  <record>
+    kubernetes_info ${if record.has_key?('kubernetes'); record['kubernetes']; else {}; end}
+    namespace_info  ${if record['kubernetes_info'] != nil && record['kubernetes_info'] != {}; "namespace_name=" + record['kubernetes_info']['namespace_name']; else nil; end}
+    pod_info        ${if record['kubernetes_info'] != nil && record['kubernetes_info'] != {}; "pod_name=" + record['kubernetes_info']['pod_name']; else nil; end}
+    container_info  ${if record['kubernetes_info'] != nil && record['kubernetes_info'] != {}; "container_name=" + record['kubernetes_info']['container_name']; else nil; end}
+    msg_key         ${if record.has_key?('message') && record['message'] != nil; record['message']; else nil; end}
       msg_info        ${if record['msg_key'] != nil && record['msg_key'].is_a?(Hash); require 'json'; "message="+record['message'].to_json; elsif record['msg_key'] != nil; "message="+record['message']; else nil; end}
       message         ${if record['msg_key'] != nil && record['kubernetes_info'] != nil && record['kubernetes_info'] != {}; record['namespace_info'] + ", " + record['container_info'] + ", " + record['pod_info'] + ", " + record['msg_info']; else record['message']; end}
-	</record>
-	remove_keys kubernetes_info, namespace_info, pod_info, container_info, msg_key, msg_info
+  </record>
+  remove_keys kubernetes_info, namespace_info, pod_info, container_info, msg_key, msg_info
   </filter>
 {{end -}}
   <match **>
@@ -862,28 +869,28 @@ const storeSyslogTemplateOld = `{{- define "storeSyslogOld" -}}
 //      hostname ${hostname}
 const storeSyslogTemplate = `{{- define "storeSyslog" -}}
 <store>
-	@type remote_syslog
-	@id {{.StoreID}}
-	host {{.Host}}
-	port {{.Port}}
-	rfc {{.Rfc}}
-	facility {{.Facility}}
+  @type remote_syslog
+  @id {{.StoreID}}
+  host {{.Host}}
+  port {{.Port}}
+  rfc {{.Rfc}}
+  facility {{.Facility}}
     severity {{.Severity}}
-	{{if .Target.Syslog.AppName -}}
-	appname {{.AppName}}
-	{{end -}}
-	{{if .Target.Syslog.MsgID -}}
-	msgid {{.MsgID}}
-	{{end -}}
-	{{if .Target.Syslog.ProcID -}}
-	procid {{.ProcID}}
-	{{end -}}
-	{{if .Target.Syslog.Tag -}}
-	program {{.Tag}}
-	{{end -}}
-	protocol {{.Protocol}}
-	packet_size 4096
-	hostname "#{ENV['NODE_NAME']}"
+  {{if .Target.Syslog.AppName -}}
+  appname {{.AppName}}
+  {{end -}}
+  {{if .Target.Syslog.MsgID -}}
+  msgid {{.MsgID}}
+  {{end -}}
+  {{if .Target.Syslog.ProcID -}}
+  procid {{.ProcID}}
+  {{end -}}
+  {{if .Target.Syslog.Tag -}}
+  program {{.Tag}}
+  {{end -}}
+  protocol {{.Protocol}}
+  packet_size 4096
+  hostname "#{ENV['NODE_NAME']}"
 {{ if .Target.Secret -}}
   tls true
   ca_file '{{ .SecretPath "ca-bundle.crt"}}'
@@ -899,10 +906,10 @@ const storeSyslogTemplate = `{{- define "storeSyslog" -}}
 {{ end -}}
 
 {{if .PayloadKey -}}
-	<format>
-	  @type single_value
-	  message_key {{.PayloadKey}}
-	</format>
+  <format>
+    @type single_value
+    message_key {{.PayloadKey}}
+  </format>
 {{end -}}
   <buffer {{.ChunkKeys}}>
     @type file
@@ -987,5 +994,51 @@ ssl_ca_cert '{{ .SecretPath "ca-bundle.crt"}}'
 {{- end }}
   overflow_action {{.OverflowAction}}
 </buffer>
+{{- end}}
+`
+
+const outputLabelLokiTemplate = `{{- define "outputLabelLokiTemplate" -}}
+<label {{.LabelName}}>
+  <filter>
+    @type record_modifier
+    <record>{{.LokiLabelFilter}}
+    </record>
+  </filter>
+
+  <match **>
+    @type loki
+    line_format json
+    url {{.URLBase}}
+    {{ with.SecretPath "username" -}}
+    username "#{File.read('{{ . }}') rescue nil}"
+    {{ end -}}
+    {{ with .SecretPath "password" -}}
+    password "#{File.read('{{ . }}') rescue nil}"
+    {{ end -}}
+    {{ with .SecretPathIfFound "tls.key" -}}
+    key "{{ . }}"
+    {{ end -}}
+    {{ with .SecretPathIfFound "tls.crt" -}}
+    cert "{{ . }}"
+    {{ end -}}
+    {{ with .SecretPathIfFound "ca-bundle.crt" -}}
+    ca_cert "{{ . }}"
+    {{ end -}}
+    <label>{{.LokiLabel}}
+    </label>
+    <buffer>
+      @type file
+      path '{{.BufferPath}}'
+      flush_interval 1s
+      flush_thread_count 2
+      flush_at_shutdown false
+      retry_max_interval 300
+      retry_forever true
+      queued_chunks_limit_size "#{ENV['BUFFER_QUEUE_LIMIT'] || '32' }"
+      chunk_limit_size "#{ENV['BUFFER_SIZE_LIMIT'] || '8m' }"
+      overflow_action "#{ENV['BUFFER_QUEUE_FULL_ACTION'] || 'block'}"
+    </buffer>
+  </match>
+</label>
 {{- end}}
 `

@@ -459,6 +459,12 @@ var _ = Describe("Generating fluentd legacy output store config blocks", func() 
 
         # Relabel specific sources (e.g. logs.apps) to multiple pipelines
         <label @_APPLICATION>
+					<filter **>
+						@type record_modifier
+						<record>
+							log_type application
+						</record>
+					</filter>
           <match **>
             @type copy
             <store>
@@ -468,6 +474,12 @@ var _ = Describe("Generating fluentd legacy output store config blocks", func() 
           </match>
         </label>
         <label @_AUDIT>
+					<filter **>
+						@type record_modifier
+						<record>
+							log_type audit
+						</record>
+					</filter>
           <match **>
             @type copy
             <store>
@@ -477,6 +489,12 @@ var _ = Describe("Generating fluentd legacy output store config blocks", func() 
           </match>
         </label>
         <label @_INFRASTRUCTURE>
+					<filter **>
+						@type record_modifier
+						<record>
+							log_type infrastructure
+						</record>
+					</filter>
           <match **>
             @type copy
             <store>
@@ -945,11 +963,14 @@ var _ = Describe("Generating fluentd legacy output store config blocks", func() 
 
         # Relabel specific sources (e.g. logs.apps) to multiple pipelines
         <label @_APPLICATION>
+					<filter **>
+						@type record_modifier
+						<record>
+							log_type application
+						</record>
+					</filter>
           <match **>
             @type copy
-
-
-
             <store>
               @type relabel
               @label @_LEGACY_SYSLOG
@@ -957,11 +978,14 @@ var _ = Describe("Generating fluentd legacy output store config blocks", func() 
           </match>
         </label>
         <label @_AUDIT>
+					<filter **>
+						@type record_modifier
+						<record>
+							log_type audit
+						</record>
+					</filter>
           <match **>
             @type copy
-
-
-
             <store>
               @type relabel
               @label @_LEGACY_SYSLOG
@@ -969,11 +993,14 @@ var _ = Describe("Generating fluentd legacy output store config blocks", func() 
           </match>
         </label>
         <label @_INFRASTRUCTURE>
+					<filter **>
+						@type record_modifier
+						<record>
+							log_type infrastructure
+						</record>
+					</filter>
           <match **>
             @type copy
-
-
-
             <store>
               @type relabel
               @label @_LEGACY_SYSLOG
@@ -1441,15 +1468,18 @@ var _ = Describe("Generating fluentd legacy output store config blocks", func() 
 
         # Relabel specific sources (e.g. logs.apps) to multiple pipelines
         <label @_APPLICATION>
+					<filter **>
+						@type record_modifier
+						<record>
+							log_type application
+						</record>
+					</filter>
           <match **>
             @type copy
-
-
             <store>
               @type relabel
               @label @_LEGACY_SECUREFORWARD
             </store>
-
             <store>
               @type relabel
               @label @_LEGACY_SYSLOG
@@ -1457,15 +1487,18 @@ var _ = Describe("Generating fluentd legacy output store config blocks", func() 
           </match>
         </label>
         <label @_AUDIT>
+					<filter **>
+						@type record_modifier
+						<record>
+							log_type audit
+						</record>
+					</filter>
           <match **>
             @type copy
-
-
             <store>
               @type relabel
               @label @_LEGACY_SECUREFORWARD
             </store>
-
             <store>
               @type relabel
               @label @_LEGACY_SYSLOG
@@ -1473,6 +1506,12 @@ var _ = Describe("Generating fluentd legacy output store config blocks", func() 
           </match>
         </label>
         <label @_INFRASTRUCTURE>
+					<filter **>
+						@type record_modifier
+						<record>
+							log_type infrastructure
+						</record>
+					</filter>
           <match **>
             @type copy
 
